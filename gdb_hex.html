@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Kernel oops hex code to instructions</title>
+<meta name="keywords" content="Linux, kernel, oops, gdb" />
+
+
+<style>
+ figure { border : 1px solid black ; padding: 5px;}
+ .output { padding-left : 10px; padding-right: 10px; padding-top: 5px; padding-bottom : 5px; border : 1px solid black;  background-color : black ; color : #00ff22; overflow : auto; }
+ .comment { color : yellow ; }
+ .typed { color : white }
+ .highlight { color : red; padding : 0; margin : 0}
+
+</style>
+</head>
+
+<body>
+<section>
+<h1>Disassembling hex to assembly</h1>
+<!-- Sat Oct 13 18:19:15 CEST 2018 -->
+<p>Linux oops contains a code section showing the running code when the oops occurred. This can be disassembled with gdb.
+
+<figure class="output">
+<pre>
+<code>
+BUG: unable to handle kernel NULL pointer dereference at (null) 
+IP: [&lt;ffffffffa03e1012>] my_oops_init+0x12/0x21 [oops] 
+PGD 7a719067 PUD 7b2b3067 PMD 0 
+Oops: 0002 [#1] SMP 
+last sysfs file: /sys/devices/virtual/misc/kvm/uevent 
+CPU 1 
+Pid: 2248, comm: insmod Tainted: P           2.6.33.3-85.fc13.x86_64 
+RIP: 0010:[&lt;ffffffffa03e1012>]  [&lt;ffffffffa03e1012>] my_oops_init+0x12/0x21 [oops] 
+RSP: 0018:ffff88007ad4bf08  EFLAGS: 00010292 
+RAX: 0000000000000018 RBX: ffffffffa03e1000 RCX: 00000000000013b7 
+RDX: 0000000000000000 RSI: 0000000000000046 RDI: 0000000000000246 
+RBP: ffff88007ad4bf08 R08: ffff88007af1cba0 R09: 0000000000000004 
+R10: 0000000000000000 R11: ffff88007ad4bd68 R12: 0000000000000000 
+R13: 00000000016b0030 R14: 0000000000019db9 R15: 00000000016b0010 
+FS:  00007fb79dadf700(0000) GS:ffff880001e80000(0000) knlGS:0000000000000000 
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b 
+CR2: 0000000000000000 CR3: 000000007a0f1000 CR4: 00000000000006e0 
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000 
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400 
+Process insmod (pid: 2248, threadinfo ffff88007ad4a000, task ffff88007a222ea0) 
+Stack: 
+ffff88007ad4bf38 ffffffff8100205f ffffffffa03de060 ffffffffa03de060 
+ 0000000000000000 00000000016b0030 ffff88007ad4bf78 ffffffff8107aac9 
+ ffff88007ad4bf78 00007fff69f3e814 0000000000019db9 0000000000020000 
+Call Trace: 
+[&lt;ffffffff8100205f>] do_one_initcall+0x59/0x154 
+[&lt;ffffffff8107aac9>] sys_init_module+0xd1/0x230 
+[&lt;ffffffff81009b02>] system_call_fastpath+0x16/0x1b 
+<span class="comment">Code: &lt;c7> 04 25 00 00 00 00 00 00 00 00 31 c0 c9 c3 00 00 00 00 00 00 00 </span>
+RIP  [&lt;ffffffffa03e1012>] my_oops_init+0x12/0x21 [oops] 
+RSP &lt;ffff88007ad4bf08> 
+CR2: 0000000000000000
+
+</code>
+</pre>
+</figure>
+
+<figure class="output">
+<pre>
+<code>
+~ $ <span class="typed">echo '&lt;c7> 04 25 00 00 00 00 00 00 00 00 31 c0 c9 c3 00 00 00 00 00 00 00' | tr -d ">"| sed -r 's/( |&lt;)/\\x/g'</span>
+\xc7\x04\x25\x00\x00\x00\x00\x00\x00\x00\x00\x31\xc0\xc9\xc3\x00\x00\x00\x00\x00\x00\x00
+~ $ <span class="typed">gdb -q ls</span> <span class="comment"># Using some binary to get gdb going</span>
+Reading symbols from ls...(no debugging symbols found)...done.
+(gdb) <span class="typed">b _start</span>
+Function "_start" not defined.
+Make breakpoint pending on future shared library load? (y or [n]) <span class="typed">y</span>
+Breakpoint 1 (_start) pending.
+(gdb) <span class="typed">run</span>
+Starting program: /bin/ls 
+
+Breakpoint 1, 0x00007ffff7dd9090 in _start () from /lib64/ld-linux-x86-64.so.2
+(gdb) <span class="typed">set $hex = "\xc7\x04\x25\x00\x00\x00\x00\x00\x00\x00\x00\x31\xc0\xc9\xc3\x00\x00\x00\x00\x00\x00\x00"</span>
+(gdb) <span class="typed">x/15i $hex</span>
+   0x7ffff7ffe170:	movl   $0x0,0x0
+   0x7ffff7ffe17b:	xor    %eax,%eax
+   0x7ffff7ffe17d:	leaveq 
+   0x7ffff7ffe17e:	retq   
+   0x7ffff7ffe17f:	add    %al,(%rax)
+   0x7ffff7ffe181:	add    %al,(%rax)
+   0x7ffff7ffe183:	add    %al,(%rax)
+   0x7ffff7ffe185:	add    %al,(%rax)
+   0x7ffff7ffe187:	add    %al,(%rax)
+   0x7ffff7ffe189:	add    %al,(%rax)
+   0x7ffff7ffe18b:	add    %al,(%rax)
+   0x7ffff7ffe18d:	add    %al,(%rax)
+   0x7ffff7ffe18f:	add    %al,(%rax)
+   0x7ffff7ffe191:	add    %al,(%rax)
+   0x7ffff7ffe193:	add    %al,(%rax)
+
+</code>
+</pre>
+</figure>
+
+<h2>Resources</h2>
+<a href="https://stackoverflow.com/questions/16731570/how-to-interpret-addresses-in-a-kernel-oops/16742918#16742918">Kernel oops explained</a>
+</section>
+
+</body>
+</html>
