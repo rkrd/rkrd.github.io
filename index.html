@@ -3,10 +3,88 @@
 <head>
 <title>Kernel oops hex code to instructions</title>
 <meta name="keywords" content="Linux, kernel, oops, gdb" />
+<style>
+.menu li {
+float: left;
+list-style-position: inside;
+list-style-type: '';
+margin-right: 1em;
+}
+div {
+    outline : 1px dashed;
+}
+</style>
+<script>
+function filter(cat) {
+	var ul = document.getElementById('articles')
+	var li = ul.getElementsByTagName('li')
+	for (i=0; i < li.length; i++) {
+		if (!cat) {
+			li[i].style.display=""
+		} else if (li[i].classList.contains(cat)) {
+			li[i].style.display=""
+		} else {
+			li[i].style.display="none"
+		}
+	}
+}
+function populate_categories() {
+	var list = document.getElementById("articles")
+	var li = list.getElementsByTagName('li')
+	var cat = []
+
+	for (i=0; i < li.length; i++) {
+		var cl = li[i].classList
+		var c = []
+		for(j=0; j < cl.length; j++) {
+			c.push(cl[j])
+			if (!cat.includes(cl[j]))
+				cat.push(cl[j])
+		}
+
+		c.sort()
+		var cat_text = "["
+		for (j=0; j < c.length; j++)
+			cat_text = cat_text + c[j] + ", "
+		cat_text = cat_text + "]"
+		var ip = li[i].getElementsByTagName('i')
+		ip[0].innerHTML = cat_text
+
+	}
+
+	cat.sort()
+	cat.push("test")
+
+	var ul = document.getElementById("list")
+	for (i=0; i < cat.length; i++) {
+		var li = document.createElement("li")
+		var a = document.createElement("a")
+		a.setAttribute("href", "#")
+		a.setAttribute("onclick", "filter('"+cat[i]+"')")
+		a.innerHTML = cat[i]
+		li.appendChild(a)
+		ul.appendChild(li)
+	}
+}
+
+window.onload = populate_categories
+</script>
 </head>
 <body>
 <h1>Articles</h1>
-<ul>
-<li><a href="gdb_hex.html">Kernel oops hex code to instructions.</a> 2018-10-13</li>
-</ul>
 
+<div id="categories">
+<ul id="list" class="menu">
+</ul>
+&nbsp;
+<!--a href="#" onclick="filter(1);return false;">filter</a-->
+</div>
+
+<div>
+<ul id="articles">
+<li class="Linux GDB"><a href="gdb_hex.html">Kernel oops hex code to instructions.</a> <i></i> 2018-10-13</li>
+</ul>
+</div>
+
+</body>
+</html>
