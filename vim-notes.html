@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Vim notes</title>
+<meta name="keywords" content="vim" />
+
+</head>
+
+<body>
+<div class="howto">
+<h3>Vim search replace incrementing number</h3>
+:let @a=1 | %s/abc/\='xyz_'.(@a+setreg('a',@a+1))/g
+</div>
+</body>
+</html>
