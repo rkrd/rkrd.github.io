@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Grep for binary offset</title>
+<meta name="keywords" content="debugging grep binary reverseengineering" />
+
+<!-- Thu Nov 22 15:03:26 CET 2018 -->
+
+
+<style>
+ figure { border : 1px solid black ; padding: 5px;}
+ .output { padding-left : 10px; padding-right: 10px; padding-top: 5px; padding-bottom : 5px; border : 1px solid black;  background-color : black ; color : #00ff22; overflow : auto; }
+ .comment { color : yellow ; }
+ .typed { color : white }
+ .highlight { color : red; padding : 0; margin : 0}
+
+</style>
+</head>
+
+<body>
+<figure class="output">
+<pre>
+<code>
+<span class="highlight">export LANG=C</span> <span class="comment"># If this is set to some UTF-8 or localized setting binary grep will not work as expected</span>
+grep --only-matching --byte-offset --binary --text --perl-regexp "\x00\x01..."
+grep -obUaP "\x00\x01..."
+</code>
+</pre>
+</figure>
+</body>
+</html>
