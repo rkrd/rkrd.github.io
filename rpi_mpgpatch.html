@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Rasperry codec patch</title>
+<meta name="keywords" content="Linux, rasperry pi, C" />
+
+
+<style>
+ figure { border : 1px solid black ; padding: 5px;}
+ .output { padding-left : 10px; padding-right: 10px; padding-top: 5px; padding-bottom : 5px; border : 1px solid black;  background-color : black ; color : #00ff22; overflow : auto; }
+ .comment { color : yellow ; }
+ .typed { color : white }
+ .highlight { color : red; padding : 0; margin : 0}
+  .listing { padding-left : 10px; padding-right : 10px; padding-top: 2px; padding-bottom : 2px;overflow : auto;background-color : #fdf6e3; margin-left :auto; margin-right : auto; width : 90%}
+
+
+</style>
+<!-- Sat Feb  9 13:13:24 CET 2019 -->
+</head>
+
+<body>
+<section>
+
+<figure class="listing">
+<pre>
+<code>
+#if 0
+Patch rpi to play MPG2 and WVC1.
+Run program on /boot/start.elf and /boot/start_x.elf. Take backup before.
+After power cycle of rpi verify with:
+vcgencmd codec_enabled MPG2
+vcgencmd codec_enabled WVC1
+#endif
+
+#include &lt;stdio.h>
+#include &lt;unistd.h>
+#include &lt;fcntl.h>
+#include &lt;sys/mman.h>
+#include &lt;sys/types.h>
+#include &lt;sys/stat.h>
+#include &lt;string.h>
+#include &lt;errno.h>
+
+unsigned char needle[] = {0x47, 0xE9, '3', '6', '2', 'H', 0x3C, 0x18};
+/*unsigned char      n[] = {0x47, 0xE9, '3', '6', '2', 'H', 0x3C, 0x1F};*/
+unsigned char needle_x[] = {0x47, 0xE9, '3', '6', '2', 'H', 0x1D, 0x18};
+/*unsigned char      n_x[] = {0x47, 0xE9, '3', '6', '2', 'H', 0x1D, 0x1F};*/
+
+void printhex(unsigned char *addr, size_t len)
+{
+	int i, j;
+	for (i = 0; i < len; i+=8) {
+	printf("%08X\t", addr+i);
+	printf("%02X %02X %02X %02X %02X %02X %02X %02X",
+		addr[i+0],
+		addr[i+1],
+		addr[i+2],
+		addr[i+3],
+		addr[i+4],
+		addr[i+5],
+		addr[i+6],
+		addr[i+7]);
+	puts("");
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	if (argc < 2) {
+		printf("to few arguments %d\n", argc);
+		return 1;
+	}
+
+	int fd = open(argv[1], O_RDWR);
+	if (fd == -1) {
+		perror("open");
+		return 1;
+	}
+
+	struct stat st;
+	fstat(fd, &st);
+
+	unsigned char *mem = mmap(NULL, st.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (mem == MAP_FAILED) {
+		printf("map failed");
+		close(fd);
+		return 2;
+	}
+
+	unsigned char *p = mem;
+
+	for (;p-mem < st.st_size;p++) {
+		if (!memcmp(needle, p, sizeof(needle))) {
+			printhex(p, sizeof(needle));	
+			p[7] = 0x1F;
+			printhex(p, sizeof(needle));	
+		}
+		if (!memcmp(needle_x, p, sizeof(needle_x))) {
+			printhex(p, sizeof(needle_x));	
+			p[7] = 0x1F;
+			printhex(p, sizeof(needle_x));	
+		}
+	}
+
+	msync(mem, st.st_size, MS_SYNC);
+	munmap(mem, st.st_size);
+	close(fd);
+
+	return 0;
+}
+</code>
+</pre>
+</figure>
+
+</section>
+
+</body>
+</html>
