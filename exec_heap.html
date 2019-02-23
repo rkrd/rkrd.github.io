@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>How to set heap area executable</title>
+<meta name="keywords" content="C programming heap shellcode lldb" />
+
+
+<style>
+ figure { border : 1px solid black ; padding: 5px;}
+ .output { padding-left : 10px; padding-right: 10px; padding-top: 5px; padding-bottom : 5px; border : 1px solid black;  background-color : black ; color : #00ff22; overflow : auto; }
+ .comment { color : yellow ; }
+ .typed { color : white }
+ .highlight { color : red; padding : 0; margin : 0}
+  .listing { padding-left : 10px; padding-right : 10px; padding-top: 2px; padding-bottom : 2px;overflow : auto;background-color : #fdf6e3; margin-left :auto; margin-right : auto; width : 90%}
+
+
+</style>
+<!--
+Sat Feb 23 14:38:39 CET 2019
+-->
+</head>
+
+<body>
+<section>
+<h1>Set heap area to executable</h1>
+
+<figure class="listing">
+<pre>
+<code>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;sys/mman.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+
+// jmp 0
+char shellcode[] = &quot;\xeb\xfe&quot;;
+
+/*
+lldb
+print &amp;shellcode
+(char (*)[3]) $0 = 0x0000000100001048
+disass -b -s 0x0000000100001048 -e 0x0000000100001048+10
+a.out`shellcode:
+a.out[0x100001048] &lt;+0&gt;: 90  nop
+a.out[0x100001049] &lt;+1&gt;: 90  nop
+*/
+
+/*
+disass -b -s &amp;shellcode
+a.out`shellcode:
+a.out[0x100001040] &lt;+0&gt;: eb fe  jmp    0x100001040               ; shellcode
+*/
+
+int main(int argc, char *argv[])
+{
+	void (*f)();
+	char *x = malloc(2);
+
+	unsigned long pagesz = getpagesize();
+	unsigned long page_start = ((unsigned long) x) &amp; ~(pagesz-1);
+
+	printf(&quot;%lx %lx %lx\n&quot;, ~(pagesz-1), (unsigned long)&amp;x, page_start);
+
+	int ret = mprotect((void *)page_start, pagesz, PROT_WRITE|PROT_EXEC);
+	//int ret = mprotect((void *)page_start, pagesz, PROT_READ|PROT_WRITE);
+
+	if (ret&lt;0) { perror(&quot;mprotect&quot;); return 1; }
+
+	memcpy(x, shellcode, sizeof(shellcode));
+
+	f = (void (*)())x;
+	f();
+
+	return 0;
+}
+
+</code>
+</pre>
+</figure>
+
+</section>
+
+</body>
+</html>
